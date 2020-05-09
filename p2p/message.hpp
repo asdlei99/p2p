@@ -6,8 +6,6 @@
 
 namespace xop {
 
-static const uint16_t xop_version = 1;
-
 enum MsgType
 {
 	MIN_MSG_ID = 0x10,
@@ -44,15 +42,7 @@ enum MsgType
 class MsgHeader
 {
 public:
-	MsgHeader() 
-	{
-		type_ = 0;
-		version_ = xop_version;
-		uid_ = 0;
-		cseq_ = 0;
-		timestamp_ = 0;
-		error_code_ = 0;
-	}
+	MsgHeader() {}
 
 	uint8_t GetType() 
 	{ return type_; }
@@ -85,6 +75,7 @@ public:
 		byte_array.WriteUint32BE(uid_);
 		byte_array.WriteUint32BE(cseq_);
 		byte_array.WriteUint32BE(timestamp_);
+		byte_array.WriteUint32BE(status_code_);
 	}
 
 	void DecodeHeader(ByteArray& byte_array) 
@@ -94,8 +85,8 @@ public:
 		uid_ = byte_array.ReadUint32BE();
 		cseq_ = byte_array.ReadUint32BE();
 		timestamp_ = byte_array.ReadUint32BE();
+		status_code_ = byte_array.ReadUint32BE();
 	}
-
 
 	virtual int Encode(ByteArray& byte_array)
 	{
@@ -109,16 +100,16 @@ public:
 		return byte_array.Size();
 	}
 
-	int GetErrorCode()
-	{ return error_code_; }
+	uint32_t GetStatusCode()
+	{ return status_code_; }
 
 protected:
-	uint8_t  type_;
-	uint8_t  version_;
-	uint32_t uid_;
-	uint32_t cseq_;
-	uint32_t timestamp_;
-	uint32_t error_code_;
+	uint8_t  type_        = 0;
+	uint8_t  version_     = 2;
+	uint32_t uid_         = 0;
+	uint32_t cseq_        = 0;
+	uint32_t timestamp_   = 0;
+	uint32_t status_code_ = 0;
 };
 
 class ActiveMsg : public MsgHeader
@@ -181,14 +172,11 @@ private:
 class ActiveAckMsg : public MsgHeader
 {
 public:
-	ActiveAckMsg(uint32_t error_code = 0)
+	ActiveAckMsg(uint32_t status_code = 0)
 	{ 
-		error_code_ = error_code;
+		status_code_ = status_code;
 		type_ = MSG_ACTIVE_ACK; 
 	}
-
-private:
-	uint32_t error_code_;
 };
 
 class SetupMsg : public MsgHeader
@@ -230,10 +218,29 @@ private:
 class SetupAckMsg : public MsgHeader
 {
 public:
-	SetupAckMsg(uint32_t error_code = 0)
+	SetupAckMsg(uint32_t status_code = 0)
 	{
-		error_code_ = error_code;
+		status_code_ = status_code;
 		type_ = MSG_SETUP_ACK;
+	}
+};
+
+class PlayMsg : public MsgHeader
+{
+public:
+	PlayMsg()
+	{
+		type_ = MSG_PLAY;
+	}
+};
+
+class PlayAckMsg : public MsgHeader
+{
+public:
+	PlayAckMsg(uint32_t status_code = 0)
+	{
+		status_code_ = status_code;
+		type_ = MSG_PLAY_ACK;
 	}
 };
 

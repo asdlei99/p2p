@@ -6,6 +6,7 @@ using namespace asio;
 RtpSource::RtpSource(asio::io_service& io_service)
 	: io_context_(io_service)
 	, io_strand_(io_service)
+	, is_alived_(false)
 {
 
 }
@@ -89,10 +90,39 @@ uint16_t RtpSource::GetRtcpPort() const
 	return 0;
 }
 
+void RtpSource::SetPeerAddress(std::string ip, uint16_t rtp_port, uint16_t rtcp_port)
+{
+	peer_rtp_address_ = ip::udp::endpoint(ip::address_v4::from_string(ip), rtp_port);
+	peer_rtcp_address_ = ip::udp::endpoint(ip::address_v4::from_string(ip), rtcp_port);
+}
+
+void RtpSource::KeepAlive()
+{
+	char empty_packet[1] = {0};
+
+	if (rtp_socket_) {
+		rtp_socket_->Send(empty_packet, 1, peer_rtp_address_);
+	}
+
+	if (rtcp_socket_) {
+		rtcp_socket_->Send(empty_packet, 1, peer_rtcp_address_);
+	}
+}
+
+bool RtpSource::IsAlive()
+{
+	return is_alived_;
+}
+
 bool RtpSource::OnRead(void* data, size_t size)
 {
 	if (size < RTP_HEADER_SIZE) {
 		return false;
+	}
+
+	if (size == 1) {
+		is_alived_ = true;
+		return true;
 	}
 
 	auto packet = std::make_shared<RtpPacket>();
@@ -144,3 +174,4 @@ bool RtpSource::OnFrame()
 
 	return true;
 }
+

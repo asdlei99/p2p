@@ -1673,5 +1673,8 @@
     <ClInclude Include="MediaSession.h">
       <Filter>源文件</Filter>
     </ClInclude>
+    <ClInclude Include="EventCallback.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

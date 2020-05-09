@@ -27,6 +27,12 @@ TEST_CASE("Test rtp transport")
 		return;
 	}
 	
+	//source->SetPeerAddress("127.0.0.1", sink->GetRtpPort(), sink->GetRtcpPort());
+	//source->KeepAlive();
+	//source->KeepAlive();
+
+	//std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
 	std::random_device rd;
 	uint32_t in_size = 102400;
 	uint32_t out_size = in_size;
@@ -55,7 +61,7 @@ TEST_CASE("Test rtp transport")
 	});
 
 	std::thread t2([&] {
-		sink->SetPeerRtpAddress("127.0.0.1", 17675);
+		sink->SetPeerAddress("127.0.0.1", 17675, 17676);
 		int num_frames = test_frames;
 		while (num_frames > 0) {
 			num_frames--;

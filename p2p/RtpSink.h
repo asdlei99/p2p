@@ -16,8 +16,7 @@ public:
 	bool Open();
 	void Close();
 
-	void SetPeerRtpAddress(std::string ip, uint16_t port);
-	void SetPeerRtcpAddress(std::string ip, uint16_t port);
+	void SetPeerAddress(std::string ip, uint16_t rtp_port, uint16_t rtcp_port);
 
 	bool SendVideo(std::shared_ptr<uint8_t> data, uint32_t size);
 	//bool SendAudio();

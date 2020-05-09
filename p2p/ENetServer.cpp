@@ -33,6 +33,9 @@ bool ENetServer::Start(const char* ip, uint16_t port, uint32_t connections)
 void ENetServer::Stop()
 {
 	if (server_ != nullptr) {
+		for (auto iter : connections_) {
+			enet_peer_disconnect(iter.second, 0);
+		}
 		connections_.clear();
 		enet_host_destroy(server_);
 		server_ = nullptr;
@@ -46,6 +49,15 @@ bool ENetServer::IsConnected(uint32_t cid)
 	}
 
 	return false;
+}
+
+void ENetServer::Close(uint32_t cid)
+{
+	auto iter = connections_.find(cid);
+	if (iter != connections_.end()) {
+		enet_peer_disconnect(iter->second, 0);
+		connections_.erase(cid);
+	}
 }
 
 int ENetServer::Send(uint32_t cid, void* data, uint32_t size)
@@ -109,3 +121,20 @@ int ENetServer::Recv(uint32_t* cid, void* data, uint32_t size, uint32_t timeout_
 
 	return 0;
 }
+
+//std::string ENetServer::GetAddress(uint32_t cid)
+//{
+	//std::string ip;
+
+	//auto iter = connections_.find(cid);
+	//if (iter != connections_.end()) {
+	//	char buffer[512] = {0};
+	//	memset(buffer, 0, 512);
+
+	//	if (!enet_address_get_host_ip(&iter->second->address, buffer, 512)) {
+	//		ip = buffer;
+	//	}
+	//}
+
+	//return ip;
+//}

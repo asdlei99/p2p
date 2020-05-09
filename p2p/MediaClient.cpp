@@ -120,6 +120,7 @@ void MediaClient::PollEvent(bool once, uint32_t timeout_msec)
 		if (msg_len > 0) {
 			if (!OnMessage((char*)message.get(), msg_len)) {
 				is_active_ = false;
+				event_client_.Close();
 				break;
 			}
 		}
@@ -142,32 +143,68 @@ bool MediaClient::OnMessage(const char* message, uint32_t len)
 	int msg_type = message[0];
 	ByteArray byte_array(message, len);
 
+	uint32_t status_code = 0;
+
 	switch (msg_type)
 	{
 	case MSG_ACTIVE_ACK:
 		{
 			ActiveAckMsg active_ack_msg;
 			active_ack_msg.Decode(byte_array);
-			if (active_ack_msg.GetErrorCode()) {
-				return false;
-			}
-			is_active_ = true;
+			status_code = active_ack_msg.GetStatusCode();
+			if (!status_code) {
+				is_active_ = true;
+			}			
+		}
+		break;
+	case MSG_SETUP_ACK:
+		{
+			SetupAckMsg setup_ack_msg;
+			setup_ack_msg.Decode(byte_array);
+			status_code = setup_ack_msg.GetStatusCode();
+			if (!status_code) {
+				SendPlay();
+			}			
+		}
+		break;
+	case MSG_PLAY_ACK:
+		{
+			PlayAckMsg play_ack_msg;
+			play_ack_msg.Decode(byte_array);
+			status_code = play_ack_msg.GetStatusCode();
 		}
 		break;
 	default:
 		break;
 	}
 
-	return true;
+	return (status_code == 0);
 }
 
 void MediaClient::SendActive()
 {
-	if (event_client_.IsConnected()) {
-		std::string token = TEST_TOKEN;
-		ByteArray byte_array;
+	std::string token = TEST_TOKEN;
+	ByteArray byte_array;
 
-		ActiveMsg msg(token.c_str(), (uint32_t)token.size() + 1);
+	ActiveMsg msg(token.c_str(), (uint32_t)token.size() + 1);
+	int size = msg.Encode(byte_array);
+	if (size > 0) {
+		event_client_.Send(byte_array.Data(), size);
+	}
+}
+
+void MediaClient::SendSetup()
+{
+	uint16_t rtp_port = 0;
+	uint16_t rtcp_port = 0;
+	if (rtp_source_) {
+		rtp_port = rtp_source_->GetRtpPort();
+		rtcp_port = rtp_source_->GetRtcpPort();
+	}
+
+	if (rtp_port > 0 && rtcp_port > 0) {
+		ByteArray byte_array;
+		SetupMsg msg(rtp_port, rtcp_port);
 		int size = msg.Encode(byte_array);
 		if (size > 0) {
 			event_client_.Send(byte_array.Data(), size);
@@ -175,24 +212,13 @@ void MediaClient::SendActive()
 	}
 }
 
-void MediaClient::SendSetup()
+void MediaClient::SendPlay()
 {
-	if (event_client_.IsConnected()) {
-
-		uint16_t rtp_port = 0;
-		uint16_t rtcp_port = 0;
-		if (rtp_source_) {
-			rtp_port = rtp_source_->GetRtpPort();
-			rtcp_port = rtp_source_->GetRtcpPort();
-		}
-
-		if (rtp_port > 0 && rtcp_port > 0) {
-			ByteArray byte_array;
-			SetupMsg msg(rtp_port, rtcp_port);
-			int size = msg.Encode(byte_array);
-			if (size > 0) {
-				event_client_.Send(byte_array.Data(), size);
-			}
-		}
+	ByteArray byte_array;
+	PlayMsg msg;
+	int size = msg.Encode(byte_array);
+	if (size > 0) {
+		event_client_.Send(byte_array.Data(), size);
 	}
 }
+

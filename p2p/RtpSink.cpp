@@ -37,6 +37,22 @@ bool RtpSink::Open(uint16_t rtp_port, uint16_t rtcp_port)
 		return false;
 	}
 
+	//std::weak_ptr<RtpSink> rtp_sink = shared_from_this();
+	//rtp_socket_->Receive([rtp_sink](void* data, size_t size, asio::ip::udp::endpoint& ep) {
+	//	auto sink = rtp_sink.lock();
+	//	if (!sink) {
+	//		return false;
+	//	}
+
+	//	if (size == 1) {
+	//		sink->peer_rtp_address_ = ep;
+	//		char empty_packet[1] = { 0 };
+	//		sink->rtp_socket_->Send(empty_packet, 1, ep);
+	//	}
+
+	//	return true;
+	//});
+
 	return true;
 }
 
@@ -71,14 +87,10 @@ void RtpSink::Close()
 	}
 }
 
-void RtpSink::SetPeerRtpAddress(std::string ip, uint16_t port)
+void RtpSink::SetPeerAddress(std::string ip, uint16_t rtp_port, uint16_t rtcp_port)
 {
-	peer_rtp_address_ = ip::udp::endpoint(ip::address_v4::from_string(ip), port);
-}
-
-void RtpSink::SetPeerRtcpAddress(std::string ip, uint16_t port)
-{
-	peer_rtcp_address_ = ip::udp::endpoint(ip::address_v4::from_string(ip), port);
+	peer_rtp_address_ = ip::udp::endpoint(ip::address_v4::from_string(ip), rtp_port);
+	peer_rtcp_address_ = ip::udp::endpoint(ip::address_v4::from_string(ip), rtcp_port);
 }
 
 uint16_t RtpSink::GetRtpPort() const 

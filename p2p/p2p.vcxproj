@@ -662,6 +662,7 @@
     <ClInclude Include="enet\unix.h" />
     <ClInclude Include="enet\utility.h" />
     <ClInclude Include="enet\win32.h" />
+    <ClInclude Include="EventCallback.h" />
     <ClInclude Include="fec\fec.h" />
     <ClInclude Include="fec\rs.h" />
     <ClInclude Include="log.h" />

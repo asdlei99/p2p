@@ -22,6 +22,10 @@ public:
 	void SetMediaCB(MediaCB cb) 
 	{ media_cb_ = cb; }
 
+	void SetPeerAddress(std::string ip, uint16_t rtp_port, uint16_t rtcp_port);
+	void KeepAlive();
+	bool IsAlive();
+
 	uint16_t GetRtpPort()  const;
 	uint16_t GetRtcpPort() const;
 
@@ -41,6 +45,8 @@ private:
 	std::map<int, std::shared_ptr<RtpPacket>> audio_packets_;
 
 	MediaCB media_cb_;
+
+	bool is_alived_;
 };
 
 #endif

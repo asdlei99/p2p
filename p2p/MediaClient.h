@@ -23,6 +23,7 @@ private:
 	bool OnMessage(const char* message, uint32_t len);
 	void SendActive();
 	void SendSetup();
+	void SendPlay();
 
 	std::mutex mutex_;
 	bool is_started_ = false;

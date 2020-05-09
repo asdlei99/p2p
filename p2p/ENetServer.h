@@ -18,6 +18,7 @@ public:
 
 	int Send(uint32_t cid, void* data, uint32_t size);
 	int Recv(uint32_t* cid, void* data, uint32_t size, uint32_t timeout_msec = 10);
+	void Close(uint32_t cid=0);
 
 private:
 	ENetAddress address_;
