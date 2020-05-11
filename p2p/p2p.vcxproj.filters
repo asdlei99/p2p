@@ -1628,53 +1628,53 @@
     <ClInclude Include="unittest\unittest.hpp">
       <Filter>源文件\unittest</Filter>
     </ClInclude>
-    <ClInclude Include="RtpSink.h">
-      <Filter>源文件</Filter>
-    </ClInclude>
-    <ClInclude Include="RtpSource.h">
-      <Filter>源文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ENetClient.h">
-      <Filter>源文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ENetServer.h">
-      <Filter>源文件</Filter>
-    </ClInclude>
     <ClInclude Include="unittest\enet_test.hpp">
       <Filter>源文件\unittest</Filter>
     </ClInclude>
-    <ClInclude Include="message.hpp">
-      <Filter>源文件</Filter>
-    </ClInclude>
-    <ClInclude Include="MediaServer.h">
-      <Filter>源文件</Filter>
-    </ClInclude>
-    <ClInclude Include="log.h">
-      <Filter>源文件</Filter>
-    </ClInclude>
     <ClInclude Include="ByteArray.hpp">
-      <Filter>源文件</Filter>
-    </ClInclude>
-    <ClInclude Include="MediaClient.h">
-      <Filter>源文件</Filter>
-    </ClInclude>
-    <ClInclude Include="UdpSocket.h">
       <Filter>源文件</Filter>
     </ClInclude>
     <ClInclude Include="unittest\udp_socket_test.hpp">
       <Filter>源文件\unittest</Filter>
     </ClInclude>
-    <ClInclude Include="RtpPacket.hpp">
-      <Filter>源文件</Filter>
-    </ClInclude>
     <ClInclude Include="unittest\rtp_test.hpp">
       <Filter>源文件\unittest</Filter>
     </ClInclude>
-    <ClInclude Include="MediaSession.h">
-      <Filter>源文件</Filter>
+    <ClInclude Include="ENetClient.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ENetServer.h">
+      <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="EventCallback.h">
-      <Filter>源文件</Filter>
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="log.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="MediaClient.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="MediaServer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="MediaSession.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="message.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RtpPacket.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RtpSink.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RtpSource.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="UdpSocket.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -19,12 +19,12 @@ public:
 	bool Receive(std::function<bool(void*, size_t, asio::ip::udp::endpoint&)> cb);
 
 	asio::ip::udp::endpoint GetLocalPoint() const
-	{ return loacal_endpoint_;  }
+	{ return local_endpoint_;  }
 
 private:
 	asio::io_context::strand io_strand_;
 	std::unique_ptr<asio::ip::udp::socket> socket_;
-	asio::ip::udp::endpoint loacal_endpoint_;
+	asio::ip::udp::endpoint local_endpoint_;
 	asio::ip::udp::endpoint remote_endpoint_;
 	std::unique_ptr<uint8_t> data_;
 

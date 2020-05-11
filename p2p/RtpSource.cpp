@@ -116,13 +116,13 @@ bool RtpSource::IsAlive()
 
 bool RtpSource::OnRead(void* data, size_t size)
 {
-	if (size < RTP_HEADER_SIZE) {
-		return false;
-	}
-
 	if (size == 1) {
 		is_alived_ = true;
 		return true;
+	}
+
+	if (size < RTP_HEADER_SIZE) {
+		return false;
 	}
 
 	auto packet = std::make_shared<RtpPacket>();

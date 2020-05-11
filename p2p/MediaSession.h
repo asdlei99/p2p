@@ -22,7 +22,7 @@ public:
 
 private:
 	asio::io_service& io_service_;
-	std::unique_ptr<RtpSink> rtp_sink_;
+	std::shared_ptr<RtpSink> rtp_sink_;
 
 	bool is_playing_;
 };

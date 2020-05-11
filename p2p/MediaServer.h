@@ -39,6 +39,7 @@ private:
 
 	asio::io_service io_service_;
 	std::unique_ptr<asio::io_service::work> io_service_work_;
+	//std::unique_ptr<std::thread> io_service_thread_;
 
 	typedef std::shared_ptr<MediaSession> MediaSessionPtr;
 	std::map<uint32_t, MediaSessionPtr> media_sessions_;

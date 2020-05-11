@@ -47,6 +47,9 @@ bool MediaServer::Start(const char* ip, uint16_t port)
 	}));
 	
 	io_service_work_.reset(new asio::io_service::work(io_service_));
+	/*io_service_thread_.reset(new std::thread([this] {
+		io_service_.run();
+	}));*/
 	return true;
 }
 
@@ -60,7 +63,10 @@ void MediaServer::Stop()
 		event_thread_ = nullptr;
 		event_server_.Stop();
 		media_sessions_.clear();
+
 		io_service_work_.reset();
+		io_service_.stop();
+		//io_service_thread_->join();
 
 		while (!frame_queue_.empty()) {
 			frame_queue_.pop();

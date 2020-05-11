@@ -37,21 +37,23 @@ bool RtpSink::Open(uint16_t rtp_port, uint16_t rtcp_port)
 		return false;
 	}
 
-	//std::weak_ptr<RtpSink> rtp_sink = shared_from_this();
-	//rtp_socket_->Receive([rtp_sink](void* data, size_t size, asio::ip::udp::endpoint& ep) {
-	//	auto sink = rtp_sink.lock();
-	//	if (!sink) {
-	//		return false;
-	//	}
+	if (rtp_socket_) {
+		std::weak_ptr<RtpSink> rtp_sink = shared_from_this();
+		rtp_socket_->Receive([rtp_sink](void* data, size_t size, asio::ip::udp::endpoint& ep) {
+			auto sink = rtp_sink.lock();
+			if (!sink) {
+				return false;
+			}
 
-	//	if (size == 1) {
-	//		sink->peer_rtp_address_ = ep;
-	//		char empty_packet[1] = { 0 };
-	//		sink->rtp_socket_->Send(empty_packet, 1, ep);
-	//	}
+			if (size == 1) {
+				sink->peer_rtp_address_ = ep;
+				char empty_packet[1] = { 0 };
+				sink->rtp_socket_->Send(empty_packet, 1, ep);
+			}
 
-	//	return true;
-	//});
+			return true;
+		});
+	}
 
 	return true;
 }
@@ -155,7 +157,7 @@ void RtpSink::HandleVideo(std::shared_ptr<uint8_t> data, uint32_t size)
 		rtp_packet_->SetSeq(packet_seq_++);
 		rtp_packet_->SetPayload(data.get() + data_index, bytes_used);
 		data_index += bytes_used;
-
+		
 		rtp_socket_->Send(rtp_packet_->Get(), rtp_packet_->Size(), peer_rtp_address_);
 		//printf("mark:%d, seq:%d, size: %u\n", rtp_packet_->GetMarker(), rtp_packet_->GetSeq(), rtp_packet_->Size());
 	}
