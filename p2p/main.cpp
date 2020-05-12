@@ -25,7 +25,7 @@ static bool is_start_play = false;
 
 class ServerEventCB : public EventCallback
 {
-public:
+private:
 	/* client connect */
 	virtual bool Connect(std::string token) {
 		return true; // false: disconnect connection
@@ -57,18 +57,30 @@ public:
 	}
 };
 
+class ClientEventCB : public EventCallback
+{
+private:
+	int OnFrame(uint8_t* data, uint32_t size, uint8_t type, uint32_t timestamp) { 
+		//printf("frame size:%u, type:%u, timestamp:%u\n", size, type, timestamp);
+		return 0;
+	};
+};
+
 int main(int argc, char* argv[])
 {
 	ServerEventCB server_event_cb;
+	ClientEventCB client_event_cb;
 
 	MediaServer server;
 	server.SetEventCallback(&server_event_cb);
 	server.Start("0.0.0.0", 17676);
 	
 	MediaClient client;
+	client.SetEventCallback(&client_event_cb);
 	client.Connect("127.0.0.1", 17676);
 
-	std::shared_ptr<uint8_t> buffer(new uint8_t[1024*1024]);
+	int buffer_size = 1024 * 100;
+	std::shared_ptr<uint8_t> buffer(new uint8_t[buffer_size]);
 	uint32_t timestamp = 0;
 
 	while (1)
@@ -78,10 +90,10 @@ int main(int argc, char* argv[])
 		}
 
 		if (is_start_play) {
-			//server.SendFrame(buffer.get(), 1024*1024, 1, timestamp++);
+			server.SendFrame(buffer.get(), buffer_size, 1, timestamp++);
 		}
 
-		Sleep(100);
+		Sleep(16);
 	}
 
 	getchar();

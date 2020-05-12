@@ -113,7 +113,7 @@ uint16_t RtpSink::GetRtcpPort() const
 	return 0;
 }
 
-bool RtpSink::SendVideo(std::shared_ptr<uint8_t> data, uint32_t size)
+bool RtpSink::SendFrame(std::shared_ptr<uint8_t> data, uint32_t size, uint8_t type, uint32_t timestamp)
 {
 	if (!rtp_socket_) {
 		return false;
@@ -121,17 +121,17 @@ bool RtpSink::SendVideo(std::shared_ptr<uint8_t> data, uint32_t size)
 
 	std::weak_ptr<RtpSink> rtp_sink = shared_from_this();
 
-	io_strand_.dispatch([rtp_sink, data, size] {
+	io_strand_.dispatch([rtp_sink, data, size, type, timestamp] {
 		auto sink = rtp_sink.lock();
 		if (sink) {
-			sink->HandleVideo(data, size);
+			sink->HandleFrame(data, size, type, timestamp);
 		}		
 	});
 
 	return true;
 }
 
-void RtpSink::HandleVideo(std::shared_ptr<uint8_t> data, uint32_t size)
+void RtpSink::HandleFrame(std::shared_ptr<uint8_t> data, uint32_t size, uint8_t type, uint32_t timestamp)
 {
 	if (!rtp_socket_ || !peer_rtp_address_.port()) {
 		return;
@@ -141,8 +141,8 @@ void RtpSink::HandleVideo(std::shared_ptr<uint8_t> data, uint32_t size)
 	int data_index = 0;
 	int data_size = size;
 
-	rtp_packet_->SetPayloadType(1);
-	rtp_packet_->SetTimestamp(GetTimestamp());
+	rtp_packet_->SetPayloadType(type);
+	rtp_packet_->SetTimestamp(timestamp);
 	rtp_packet_->SetMarker(0);
 
 	while (data_index < data_size) {
@@ -157,7 +157,6 @@ void RtpSink::HandleVideo(std::shared_ptr<uint8_t> data, uint32_t size)
 		rtp_packet_->SetSeq(packet_seq_++);
 		rtp_packet_->SetPayload(data.get() + data_index, bytes_used);
 		data_index += bytes_used;
-		
 		rtp_socket_->Send(rtp_packet_->Get(), rtp_packet_->Size(), peer_rtp_address_);
 		//printf("mark:%d, seq:%d, size: %u\n", rtp_packet_->GetMarker(), rtp_packet_->GetSeq(), rtp_packet_->Size());
 	}

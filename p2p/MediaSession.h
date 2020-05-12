@@ -20,6 +20,12 @@ public:
 	bool IsPlaying() const
 	{ return is_playing_; }
 
+	uint16_t GetRtpPort()  const
+	{ return rtp_sink_->GetRtpPort(); }
+
+	uint16_t GetRtcpPort() const
+	{ return rtp_sink_->GetRtcpPort(); }
+
 private:
 	asio::io_service& io_service_;
 	std::shared_ptr<RtpSink> rtp_sink_;

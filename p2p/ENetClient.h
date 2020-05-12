@@ -2,6 +2,7 @@
 #define ENENT_CLIENT_H
 
 #include <cstdint>
+#include <string>
 #include "enet/enet.h"
 
 class ENetClient
@@ -17,6 +18,8 @@ public:
 
 	int Send(void* data, uint32_t size);
 	int Recv(void* data, uint32_t size, uint32_t timeout_msec = 100);
+
+	std::string GetPeerAddress();
 
 private:
 	ENetAddress address_;

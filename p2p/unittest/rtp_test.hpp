@@ -48,7 +48,7 @@ TEST_CASE("Test rtp transport")
 	int test_frames = 10;
 
 	int num_frames = 0;
-	source->SetMediaCB([out_data, &num_frames, &test_frames](std::shared_ptr<uint8_t> data, 
+	source->SetFrameCallback([out_data, &num_frames, &test_frames](std::shared_ptr<uint8_t> data, 
 		size_t size, uint8_t type, uint32_t timestamp) {
 		memcpy(out_data.get(), data.get(), size);
 		num_frames++;
@@ -62,7 +62,7 @@ TEST_CASE("Test rtp transport")
 		int num_frames = test_frames;
 		while (num_frames > 0) {
 			num_frames--;
-			sink->SendVideo(in_data, in_size);		
+			sink->SendFrame(in_data, in_size, 1, 1);		
 			std::this_thread::sleep_for(std::chrono::milliseconds(5));
 		}		
 	});

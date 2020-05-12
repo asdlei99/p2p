@@ -35,6 +35,9 @@ void MediaSession::StopPlay()
 
 int MediaSession::SendFrame(uint8_t* data, uint32_t size, uint8_t type, uint32_t timestamp)
 {
-	//printf("timestamp: %u, type: %u, size: %u \n", timestamp, type, size);
+	//printf(" - timestamp: %u, type: %u, size: %u \n", timestamp, type, size);
+	std::shared_ptr<uint8_t> data_ptr(new uint8_t[size]);
+	memcpy(data_ptr.get(), data, size);
+	rtp_sink_->SendFrame(data_ptr, size, type, timestamp);
 	return 0;
 }

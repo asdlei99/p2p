@@ -47,9 +47,9 @@ bool MediaServer::Start(const char* ip, uint16_t port)
 	}));
 	
 	io_service_work_.reset(new asio::io_service::work(io_service_));
-	/*io_service_thread_.reset(new std::thread([this] {
+	io_service_thread_.reset(new std::thread([this] {
 		io_service_.run();
-	}));*/
+	}));
 	return true;
 }
 
@@ -66,7 +66,7 @@ void MediaServer::Stop()
 
 		io_service_work_.reset();
 		io_service_.stop();
-		//io_service_thread_->join();
+		io_service_thread_->join();
 
 		while (!frame_queue_.empty()) {
 			frame_queue_.pop();
@@ -96,15 +96,13 @@ void MediaServer::EventLoop()
 		queue_mutex_.lock();
 		while (!frame_queue_.empty()) {
 			auto byte_array = frame_queue_.front();
+			uint8_t type = (uint8_t)byte_array->ReadUint16BE();
+			uint32_t timestamp = byte_array->ReadUint32BE();
+			uint32_t size = byte_array->ReadUint32BE();
 			for (auto iter : media_sessions_) {
 				auto session = iter.second;
-				if (session->IsPlaying()) {
-					uint8_t type = (uint8_t)byte_array->ReadUint16BE();
-					uint32_t timestamp = byte_array->ReadUint32BE();					
-					uint32_t size = byte_array->ReadUint32BE();
-					if (size > 0) {
-						session->SendFrame(byte_array->Data()+10, size, type, timestamp);
-					}					
+				if (session->IsPlaying() && size>0) {				
+					session->SendFrame(byte_array->Data()+10, size, type, timestamp);			
 				}
 			}
 			frame_queue_.pop();
@@ -185,7 +183,7 @@ uint32_t MediaServer::OnSetup(uint32_t cid, ByteArray& message)
 	}
 
 	ByteArray byte_array;
-	SetupAckMsg ack_msg;
+	SetupAckMsg ack_msg(session->GetRtpPort(), session->GetRtcpPort());
 	ack_msg.SetUid(setup_msg.GetUid());
 	ack_msg.SetCSeq(setup_msg.GetCSeq());
 	int size = ack_msg.Encode(byte_array);

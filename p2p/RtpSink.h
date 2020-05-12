@@ -18,15 +18,13 @@ public:
 
 	void SetPeerAddress(std::string ip, uint16_t rtp_port, uint16_t rtcp_port);
 
-	bool SendVideo(std::shared_ptr<uint8_t> data, uint32_t size);
-	//bool SendAudio();
+	bool SendFrame(std::shared_ptr<uint8_t> data, uint32_t size, uint8_t type, uint32_t timestamp);
 
 	uint16_t GetRtpPort()  const;
 	uint16_t GetRtcpPort() const;
 
 private:
-	void HandleVideo(std::shared_ptr<uint8_t> data, uint32_t size);
-	//void HandleAudio();
+	void HandleFrame(std::shared_ptr<uint8_t> data, uint32_t size, uint8_t type, uint32_t timestamp);
 
 	asio::io_context& io_context_;
 	asio::io_context::strand io_strand_;

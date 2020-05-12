@@ -179,17 +179,11 @@ public:
 	}
 };
 
-class SetupMsg : public MsgHeader
+class Setup : public MsgHeader
 {
 public:
-	SetupMsg(){ }
-
-	SetupMsg(uint16_t rtp_port, uint16_t rtcp_port)
-		: rtp_port_(rtp_port)
-		, rtcp_port_(rtcp_port)
-	{
-		type_ = MSG_SETUP;
-	}
+	Setup() {}
+	virtual ~Setup() {}
 
 	virtual int Encode(ByteArray& byte_array)
 	{
@@ -202,7 +196,7 @@ public:
 	virtual int Decode(ByteArray& byte_array)
 	{
 		DecodeHeader(byte_array);
-		if (type_ != MSG_SETUP) {
+		if (type_ != MSG_SETUP && type_ != MSG_SETUP_ACK) {
 			return -1;
 		}
 		rtp_port_ = byte_array.ReadUint16LE();
@@ -210,17 +204,46 @@ public:
 		return byte_array.Size();
 	}
 
-private:
-	uint16_t rtp_port_  = 0;
+	uint16_t GetRtpPort() const
+	{ return rtp_port_; }
+
+	uint16_t GetRtcpPort() const
+	{ return rtcp_port_; }
+
+protected:
+	uint16_t rtp_port_ = 0;
 	uint16_t rtcp_port_ = 0;
 };
 
-class SetupAckMsg : public MsgHeader
+class SetupMsg : public Setup
 {
 public:
-	SetupAckMsg(uint32_t status_code = 0)
+	
+	SetupMsg(uint16_t rtp_port, uint16_t rtcp_port)
 	{
-		status_code_ = status_code;
+		rtp_port_ = rtp_port;
+		rtcp_port_ = rtcp_port;
+		type_ = MSG_SETUP;
+	}
+
+	SetupMsg()
+	{
+		type_ = MSG_SETUP;
+	}
+};
+
+class SetupAckMsg : public Setup
+{
+public:
+	SetupAckMsg(uint16_t rtp_port, uint16_t rtcp_port, uint32_t status_code = 0)
+	{
+		rtp_port_ = rtp_port;
+		rtcp_port_ = rtcp_port;
+		type_ = MSG_SETUP_ACK;
+	}
+
+	SetupAckMsg()
+	{
 		type_ = MSG_SETUP_ACK;
 	}
 };

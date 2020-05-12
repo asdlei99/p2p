@@ -101,3 +101,11 @@ int ENetClient::Recv(void* data, uint32_t size, uint32_t timeout_msec)
 
 	return 0;
 }
+
+std::string ENetClient::GetPeerAddress()
+{
+	char ip[16];
+	memset(ip, 0, 16);
+	enet_address_get_host_ip(&address_, ip, 16);
+	return std::string(ip);
+}

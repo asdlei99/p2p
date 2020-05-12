@@ -27,8 +27,8 @@ bool UdpSocket::Open(std::string ip, uint16_t port)
 		return false;
 	}
 
-	socket_base::send_buffer_size send_buffer_size(100 * 1024);
-	socket_base::receive_buffer_size receive_buffer_size(100 * 1024);
+	socket_base::send_buffer_size send_buffer_size(1024 * 1024);
+	socket_base::receive_buffer_size receive_buffer_size(1024 * 1024);
 	socket_->set_option(send_buffer_size);
 	socket_->set_option(receive_buffer_size);
 	local_endpoint_ = socket_->local_endpoint();

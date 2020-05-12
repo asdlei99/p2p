@@ -52,7 +52,7 @@ public:
 
 	inline void Write(const char* data, int size) {
 		resize(size);
-		memcpy(&data_[index_], data, size);
+		memcpy(&data_[0]+ index_, data, size);
 		index_ += size;		
 	}
 
@@ -62,7 +62,7 @@ public:
 			size = cap;
 		}
 
-		memcpy(data, &data_[index_], size);
+		memcpy(data, &data_[0] + index_, size);
 		index_ += size;
 		return size;
 	}

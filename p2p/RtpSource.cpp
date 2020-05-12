@@ -35,6 +35,11 @@ bool RtpSource::Open(uint16_t rtp_port, uint16_t rtcp_port)
 			return false;
 		}
 
+		if (size == 1) {
+			source->is_alived_ = true;
+			return true;
+		}
+
 		return source->OnRead(data, size);
 	});
 
@@ -94,6 +99,7 @@ void RtpSource::SetPeerAddress(std::string ip, uint16_t rtp_port, uint16_t rtcp_
 {
 	peer_rtp_address_ = ip::udp::endpoint(ip::address_v4::from_string(ip), rtp_port);
 	peer_rtcp_address_ = ip::udp::endpoint(ip::address_v4::from_string(ip), rtcp_port);
+	KeepAlive();
 }
 
 void RtpSource::KeepAlive()
@@ -116,11 +122,6 @@ bool RtpSource::IsAlive()
 
 bool RtpSource::OnRead(void* data, size_t size)
 {
-	if (size == 1) {
-		is_alived_ = true;
-		return true;
-	}
-
 	if (size < RTP_HEADER_SIZE) {
 		return false;
 	}
@@ -168,8 +169,8 @@ bool RtpSource::OnFrame()
 
 	video_packets_.clear();
 
-	if (data_size > 0 && media_cb_) {
-		return media_cb_(data, data_size, type, timestamp);
+	if (data_size > 0 && frame_cb_) {
+		return frame_cb_(data, data_size, type, timestamp);
 	}
 
 	return true;

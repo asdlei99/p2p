@@ -3,12 +3,13 @@
 
 #include "UdpSocket.h"
 #include "RtpPacket.hpp"
+#include "asio/deadline_timer.hpp"
 #include <map>
 
 class RtpSource : public std::enable_shared_from_this<RtpSource>
 {
 public:
-	typedef std::function<bool(std::shared_ptr<uint8_t> data, size_t size, uint8_t type, uint32_t timestamp)> MediaCB;
+	typedef std::function<bool(std::shared_ptr<uint8_t> data, size_t size, uint8_t type, uint32_t timestamp)> FrameCB;
 
 	RtpSource& operator=(const RtpSource&) = delete;
 	RtpSource(const RtpSource&) = delete;
@@ -19,8 +20,8 @@ public:
 	bool Open();
 	void Close();
 
-	void SetMediaCB(MediaCB cb) 
-	{ media_cb_ = cb; }
+	void SetFrameCallback(FrameCB cb)
+	{ frame_cb_ = cb; }
 
 	void SetPeerAddress(std::string ip, uint16_t rtp_port, uint16_t rtcp_port);
 	void KeepAlive();
@@ -44,7 +45,7 @@ private:
 	std::map<int, std::shared_ptr<RtpPacket>> video_packets_;
 	std::map<int, std::shared_ptr<RtpPacket>> audio_packets_;
 
-	MediaCB media_cb_;
+	FrameCB frame_cb_;
 
 	bool is_alived_;
 };

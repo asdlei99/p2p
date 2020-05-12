@@ -2,10 +2,11 @@
 #define EVENT_CALLBACK_H
 
 #include <cstdint>
+#include <string>
 
 class EventCallback
 {
-public:
+protected:
 
 	/************************* Server Event *************************/
 
@@ -32,11 +33,14 @@ public:
 
 	/************************* Client Event *************************/
 
-	virtual void OnFrame() { };
+	virtual int OnFrame(uint8_t* data, uint32_t size, uint8_t type, uint32_t timestamp) { return 0; };
 
 	/****************************************************************/
 
 protected:
+	friend class MediaServer;
+	friend class MediaClient;
+
 	virtual ~EventCallback() {}
 };
 
