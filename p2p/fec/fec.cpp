@@ -16,6 +16,7 @@ Github: https://github.com/polygraphene
 #include "fec.h"
 #include "rs.h"
 #include <assert.h>
+#include <string.h>
 #include <vector>
 #include <chrono>
 #include <mutex>

@@ -176,9 +176,6 @@
     <ClInclude Include="enet\protocol.h">
       <Filter>源文件\enet</Filter>
     </ClInclude>
-    <ClInclude Include="enet\time.h">
-      <Filter>源文件\enet</Filter>
-    </ClInclude>
     <ClInclude Include="enet\types.h">
       <Filter>源文件\enet</Filter>
     </ClInclude>
@@ -1675,6 +1672,9 @@
     </ClInclude>
     <ClInclude Include="UdpSocket.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="enet\enet_time.h">
+      <Filter>源文件\enet</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

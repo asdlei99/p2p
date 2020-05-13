@@ -135,39 +135,50 @@ bool RtpSource::OnRead(void* data, size_t size)
 
 	uint8_t  mark = packet->GetMarker();
 	uint16_t seq = packet->GetSeq();
+	uint32_t timestamp = packet->GetTimestamp();
 	//printf("mark:%d, seq:%d, size: %u\n", mark, seq, size);
 
-	video_packets_[seq] = packet;
+	auto& packets = frames_[timestamp];
+	packets[seq] = packet;
 
 	if (mark) {
-		return OnFrame();
+		return OnFrame(timestamp);
+	}
+
+	if (frames_.size() > 2) {
+		frames_.erase(frames_.begin());
 	}
 
 	return true;
 }
 
-bool RtpSource::OnFrame()
+bool RtpSource::OnFrame(uint32_t timestamp)
 {
-	if (video_packets_.empty()) {
+	if (frames_.empty()) {
 		return false;
 	}
 
-	std::shared_ptr<uint8_t> data(new uint8_t[video_packets_.size() * 1500]);
+	if (frames_.find(timestamp) == frames_.end()) {
+		return false;
+	}
+
+	auto& packets = frames_[timestamp];
+
+	std::shared_ptr<uint8_t> data(new uint8_t[packets.size() * 1500]);
 	int data_size = 0;
 	int data_index = 0;
 
-	auto first_packet = video_packets_.begin()->second;
-	uint32_t timestamp = first_packet->GetTimestamp();
+	auto first_packet = packets.begin()->second;
 	uint8_t type = first_packet->GetPayloadType();
 
-	for (auto iter : video_packets_) {
+	for (auto iter : packets) {
 		auto packet = iter.second;
 		int payload_size = packet->GetPayload(data.get() + data_index, 1500);
 		data_index += payload_size;
 		data_size += payload_size;
 	}
 
-	video_packets_.clear();
+	frames_.erase(timestamp);
 
 	if (data_size > 0 && frame_cb_) {
 		return frame_cb_(data, data_size, type, timestamp);

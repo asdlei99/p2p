@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <cstdlib>
-#include <iostream>
+#include <thread>
+#include <chrono>
 #include "asio.hpp"
 
 #define CATCH_CONFIG_RUNNER
@@ -61,7 +62,7 @@ class ClientEventCB : public EventCallback
 {
 private:
 	int OnFrame(uint8_t* data, uint32_t size, uint8_t type, uint32_t timestamp) { 
-		//printf("frame size:%u, type:%u, timestamp:%u\n", size, type, timestamp);
+		printf("frame size:%u, type:%u, timestamp:%u\n", size, type, timestamp);
 		return 0;
 	};
 };
@@ -93,7 +94,7 @@ int main(int argc, char* argv[])
 			server.SendFrame(buffer.get(), buffer_size, 1, timestamp++);
 		}
 
-		Sleep(16);
+		std::this_thread::sleep_for(std::chrono::milliseconds(16));
 	}
 
 	getchar();

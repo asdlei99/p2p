@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstdint>
 #include <vector>
+#include <string.h>
 
 class ByteArray
 {

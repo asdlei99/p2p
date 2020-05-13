@@ -655,9 +655,9 @@
     <ClInclude Include="ENetServer.h" />
     <ClInclude Include="enet\callbacks.h" />
     <ClInclude Include="enet\enet.h" />
+    <ClInclude Include="enet\enet_time.h" />
     <ClInclude Include="enet\list.h" />
     <ClInclude Include="enet\protocol.h" />
-    <ClInclude Include="enet\time.h" />
     <ClInclude Include="enet\types.h" />
     <ClInclude Include="enet\unix.h" />
     <ClInclude Include="enet\utility.h" />

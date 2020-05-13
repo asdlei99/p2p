@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <map>
+#include <string.h>
 #include "enet/enet.h"
 
 class ENetServer

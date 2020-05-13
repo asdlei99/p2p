@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <string>
+#include <string.h>
 #include "enet/enet.h"
 
 class ENetClient

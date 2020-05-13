@@ -32,7 +32,7 @@ public:
 
 private:
 	bool OnRead(void* data, size_t size);
-	bool OnFrame();
+	bool OnFrame(uint32_t timestamp);
 
 	asio::io_context& io_context_;
 	asio::io_context::strand io_strand_;
@@ -42,8 +42,8 @@ private:
 	asio::ip::udp::endpoint peer_rtp_address_;
 	asio::ip::udp::endpoint peer_rtcp_address_;
 
-	std::map<int, std::shared_ptr<RtpPacket>> video_packets_;
-	std::map<int, std::shared_ptr<RtpPacket>> audio_packets_;
+	typedef std::map<int, std::shared_ptr<RtpPacket>> RtpPackets;
+	std::map<uint32_t, RtpPackets> frames_;
 
 	FrameCB frame_cb_;
 
