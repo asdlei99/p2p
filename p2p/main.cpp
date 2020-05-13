@@ -2,20 +2,19 @@
 #include <cstdlib>
 #include <thread>
 #include <chrono>
-#include "asio.hpp"
 
 #define CATCH_CONFIG_RUNNER
 
 #ifdef CATCH_CONFIG_RUNNER
 
-#include "unittest/unittest.hpp"
-int main(int argc, char* argv[]) 
-{
-	Catch::Session session;
-	session.run(argc, argv);
-	getchar();
-	return 0;
-}
+//#include "unittest/unittest.hpp"
+//int main(int argc, char* argv[]) 
+//{
+//	Catch::Session session;
+//	session.run(argc, argv);
+//	getchar();
+//	return 0;
+//}
 
 #else
 
