@@ -32,6 +32,7 @@ private:
 	void SendActive();
 	void SendSetup();
 	void SendPlay();
+	void SendPong(uint32_t timestamp);
 
 	std::mutex mutex_;
 	bool is_started_ = false;

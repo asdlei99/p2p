@@ -79,17 +79,28 @@ void MediaServer::EventLoop()
 	uint32_t msec = 1;
 	uint32_t cid = 0;
 	uint32_t max_message_len = 1500;
-	std::shared_ptr<uint8_t> message(new uint8_t[max_message_len]);
+	std::shared_ptr<char> message(new char[max_message_len]);
 
 	while (is_started_)  
 	{
 		/* 处理信令 */
 		int msg_len = event_server_.Recv(&cid, message.get(), max_message_len, msec);
 		if (msg_len > 0) {
-			OnMessage(cid, (char*)message.get(), msg_len);
+			OnMessage(cid, message.get(), msg_len);
 		}
 		else if (msg_len < 0) {			
 			media_sessions_.erase(cid);
+		}
+
+		for (auto iter : media_sessions_) {
+			auto cid = iter.first;
+			auto session = iter.second;
+			do {
+				msg_len = session->Poll(message.get(), max_message_len);
+				if (msg_len > 0) {
+					event_server_.Send(cid, message.get(), msg_len);
+				}
+			} while (msg_len > 0);
 		}
 
 		/* 处理媒体数据 */
@@ -128,7 +139,13 @@ void MediaServer::OnMessage(uint32_t cid, const char* message, uint32_t len)
 		break;
 	case MSG_PLAY:
 		status_code = OnPlay(cid, byte_array);
-	default:
+		break;
+	default:		
+		auto iter = media_sessions_.find(cid);
+		if (iter != media_sessions_.end()) {
+			auto session = iter->second;
+			session->Process(message, len);
+		}
 		break;
 	}
 

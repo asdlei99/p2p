@@ -7,14 +7,14 @@
 
 #ifdef CATCH_CONFIG_RUNNER
 
-//#include "unittest/unittest.hpp"
-//int main(int argc, char* argv[]) 
-//{
-//	Catch::Session session;
-//	session.run(argc, argv);
-//	getchar();
-//	return 0;
-//}
+#include "unittest/unittest.hpp"
+int main(int argc, char* argv[]) 
+{
+	Catch::Session session;
+	session.run(argc, argv);
+	getchar();
+	return 0;
+}
 
 #else
 
@@ -61,7 +61,7 @@ class ClientEventCB : public EventCallback
 {
 private:
 	int OnFrame(uint8_t* data, uint32_t size, uint8_t type, uint32_t timestamp) { 
-		printf("frame size:%u, type:%u, timestamp:%u\n", size, type, timestamp);
+		//printf("frame size:%u, type:%u, timestamp:%u\n", size, type, timestamp);
 		return 0;
 	};
 };

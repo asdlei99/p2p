@@ -232,37 +232,44 @@ bool MediaClient::OnMessage(const char* message, uint32_t len)
 	switch (msg_type)
 	{
 	case MSG_ACTIVE_ACK:
-	{
-		ActiveAckMsg active_ack_msg;
-		active_ack_msg.Decode(byte_array);
-		status_code = active_ack_msg.GetStatusCode();
-		if (!status_code) {
-			is_active_ = true;
+		{
+			ActiveAckMsg active_ack_msg;
+			active_ack_msg.Decode(byte_array);
+			status_code = active_ack_msg.GetStatusCode();
+			if (!status_code) {
+				is_active_ = true;
+			}
 		}
-	}
-	break;
+		break;
 	case MSG_SETUP_ACK:
-	{
-		SetupAckMsg setup_ack_msg;
-		setup_ack_msg.Decode(byte_array);
-		status_code = setup_ack_msg.GetStatusCode();
-		if (!status_code) {
-			is_setup_ = true;
-			rtp_source_->SetPeerAddress(event_client_.GetPeerAddress(),
-				setup_ack_msg.GetRtpPort(), setup_ack_msg.GetRtcpPort());
+		{
+			SetupAckMsg setup_ack_msg;
+			setup_ack_msg.Decode(byte_array);
+			status_code = setup_ack_msg.GetStatusCode();
+			if (!status_code) {
+				is_setup_ = true;
+				rtp_source_->SetPeerAddress(event_client_.GetPeerAddress(),
+					setup_ack_msg.GetRtpPort(), setup_ack_msg.GetRtcpPort());
+			}
 		}
-	}
-	break;
+		break;
 	case MSG_PLAY_ACK:
-	{
-		PlayAckMsg play_ack_msg;
-		play_ack_msg.Decode(byte_array);
-		status_code = play_ack_msg.GetStatusCode();
-		if (!status_code) {
-			is_play_ = true;
+		{
+			PlayAckMsg play_ack_msg;
+			play_ack_msg.Decode(byte_array);
+			status_code = play_ack_msg.GetStatusCode();
+			if (!status_code) {
+				is_play_ = true;
+			}
 		}
-	}
-	break;
+		break;
+	case MSG_PING:
+		{
+			PingMsg ping_msg;
+			ping_msg.Decode(byte_array);
+			SendPong(ping_msg.GetTimestamp());
+		}
+		break;
 	default:
 		break;
 	}
@@ -311,3 +318,13 @@ void MediaClient::SendPlay()
 	}
 }
 
+void MediaClient::SendPong(uint32_t timestamp)
+{
+	ByteArray byte_array;
+	PongMsg msg;
+	msg.SetTimestamp(timestamp);
+	int size = msg.Encode(byte_array);
+	if (size > 0) {
+		event_client_.Send(byte_array.Data(), size);
+	}
+}

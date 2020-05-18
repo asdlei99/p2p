@@ -267,6 +267,24 @@ public:
 	}
 };
 
+class PingMsg : public MsgHeader
+{
+public:
+	PingMsg()
+	{
+		type_ = MSG_PING;
+	}
+};
+
+class PongMsg : public MsgHeader
+{
+public:
+	PongMsg()
+	{
+		type_ = MSG_PONG;
+	}
+};
+
 }
 
 #endif
