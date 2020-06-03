@@ -79,7 +79,7 @@ int main(int argc, char* argv[])
 
 	MediaServer server;
 	server.SetOption(OPT_SET_FEC_PERC, 15); /* 设置FEC比例 */ 
-	server.SetOption(OPT_SET_PACKET_LOSS_PERC, 8); /* 丢包测试 */ 
+	//server.SetOption(OPT_SET_PACKET_LOSS_PERC, 5); /* 丢包测试 */ 
 	server.SetEventCallback(&server_event_cb);
 	server.Start("0.0.0.0", 17676);
 	
