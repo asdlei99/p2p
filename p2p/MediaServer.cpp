@@ -191,7 +191,8 @@ uint32_t MediaServer::OnSetup(uint32_t cid, ByteArray& message)
 
 	uint32_t status_code = 0;
 	auto session = std::make_shared<MediaSession>(io_service_);
-
+	session->SetOption(OPT_SET_FEC_PERC, fec_perc_);
+	session->SetOption(OPT_SET_PACKET_LOSS_PERC, packet_loss_perc_);
 	if (!session->Open()) {
 		status_code = 500;
 	}

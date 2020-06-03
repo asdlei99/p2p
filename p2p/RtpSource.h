@@ -3,6 +3,7 @@
 
 #include "UdpSocket.h"
 #include "RtpPacket.hpp"
+#include "fec/fec.h"
 #include <map>
 
 class RtpSource : public std::enable_shared_from_this<RtpSource>
@@ -44,8 +45,9 @@ private:
 	typedef std::map<int, std::shared_ptr<RtpPacket>> RtpPackets;
 	std::map<uint32_t, RtpPackets> frames_;
 
-	FrameCB frame_cb_;
+	std::unique_ptr<fec::FecDecoder> fec_decoder_;
 
+	FrameCB frame_cb_;
 	bool is_alived_;
 };
 

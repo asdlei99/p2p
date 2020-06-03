@@ -670,6 +670,7 @@
     <ClInclude Include="MediaSession.h" />
     <ClInclude Include="message.hpp" />
     <ClInclude Include="MediaServer.h" />
+    <ClInclude Include="option.hpp" />
     <ClInclude Include="RtpPacket.hpp" />
     <ClInclude Include="RtpSink.h" />
     <ClInclude Include="RtpSource.h" />

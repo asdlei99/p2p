@@ -7,6 +7,7 @@ RtpSource::RtpSource(asio::io_service& io_service)
 	: io_context_(io_service)
 	, io_strand_(io_service)
 	, is_alived_(false)
+	, fec_decoder_(new fec::FecDecoder)
 {
 
 }
@@ -141,12 +142,13 @@ bool RtpSource::OnRead(void* data, size_t size)
 	auto& packets = frames_[timestamp];
 	packets[seq] = packet;
 
-	if (mark) {
-		return OnFrame(timestamp);
+	if (frames_.size() >= 2) {
+		OnFrame(frames_.begin()->first);
+		frames_.erase(frames_.begin());
 	}
 
-	if (frames_.size() > 2) {
-		frames_.erase(frames_.begin());
+	if (mark) {
+		return OnFrame(timestamp);
 	}
 
 	return true;
@@ -162,28 +164,47 @@ bool RtpSource::OnFrame(uint32_t timestamp)
 		return false;
 	}
 
-	auto& packets = frames_[timestamp];
+	auto& rtp_packets = frames_[timestamp];
 
-	std::shared_ptr<uint8_t> data(new uint8_t[packets.size() * 1500]);
-	int data_size = 0;
+	int out_buf_size = rtp_packets.size() * 1500;
+	std::shared_ptr<uint8_t> out_buf(new uint8_t[out_buf_size]);
+	int out_data_size = 0;
 	int data_index = 0;
 
-	auto first_packet = packets.begin()->second;
+	auto first_packet = rtp_packets.begin()->second;
 	uint8_t type = first_packet->GetPayloadType();
+	uint8_t extension = first_packet->GetExtension();
 
-	for (auto iter : packets) {
-		auto packet = iter.second;
-		int payload_size = packet->GetPayload(data.get() + data_index, 1500);
-		data_index += payload_size;
-		data_size += payload_size;
+	if (extension) { //use fec
+		fec::FecPackets out_packets;
+		for (auto iter : rtp_packets) {
+			auto packet = iter.second;
+			std::shared_ptr<fec::FecPacket> fec_packet = std::make_shared<fec::FecPacket>();
+			int payload_size = packet->GetPayload((uint8_t*)fec_packet.get(), out_buf_size);
+			out_packets[fec_packet->header.fec_index] = fec_packet;
+		}
+
+		if (out_packets.size() > 0) {
+			out_data_size = fec_decoder_->Decode(out_packets, out_buf.get(), out_buf_size);
+			if (out_data_size <= 0) {
+				out_data_size = -1;
+			}
+		}
+	}
+	else {
+		for (auto iter : rtp_packets) {
+			auto packet = iter.second;
+			int payload_size = packet->GetPayload(out_buf.get() + data_index, 1500);
+			data_index += payload_size;
+			out_data_size += payload_size;
+		}
 	}
 
 	frames_.erase(timestamp);
 
-	if (data_size > 0 && frame_cb_) {
-		return frame_cb_(data, data_size, type, timestamp);
+	if (out_data_size > 0 && frame_cb_) {
+		return frame_cb_(out_buf, out_data_size, type, timestamp);
 	}
 
 	return true;
 }
-

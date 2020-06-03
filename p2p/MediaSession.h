@@ -2,8 +2,9 @@
 #define MEDIA_SESSION_H
 
 #include "RtpSink.h"
+#include "option.hpp"
 
-class MediaSession
+class MediaSession : public Option
 {
 public:
 	MediaSession(asio::io_service& io_service);

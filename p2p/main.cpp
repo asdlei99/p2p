@@ -3,7 +3,7 @@
 #include <thread>
 #include <chrono>
 
-#define CATCH_CONFIG_RUNNER
+//#define CATCH_CONFIG_RUNNER
 
 #ifdef CATCH_CONFIG_RUNNER
 
@@ -62,8 +62,14 @@ class ClientEventCB : public EventCallback
 private:
 	int OnFrame(uint8_t* data, uint32_t size, uint8_t type, uint32_t timestamp) { 
 		//printf("frame size:%u, type:%u, timestamp:%u\n", size, type, timestamp);
+		if (last_timestamp_ > 0 && (last_timestamp_+1) != timestamp) {
+			printf("frame(%u) loss !!! \n", last_timestamp_ + 1);
+		}
+		last_timestamp_ = timestamp;
 		return 0;
 	};
+
+	uint32_t last_timestamp_ = 0;
 };
 
 int main(int argc, char* argv[])
@@ -72,6 +78,8 @@ int main(int argc, char* argv[])
 	ClientEventCB client_event_cb;
 
 	MediaServer server;
+	server.SetOption(OPT_SET_FEC_PERC, 15); /* ÉèÖÃFEC±ÈÀı */ 
+	server.SetOption(OPT_SET_PACKET_LOSS_PERC, 8); /* ¶ª°ü²âÊÔ */ 
 	server.SetEventCallback(&server_event_cb);
 	server.Start("0.0.0.0", 17676);
 	

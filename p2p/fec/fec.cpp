@@ -25,7 +25,7 @@ Github: https://github.com/polygraphene
 namespace fec
 {
 
-static const int MAX_VIDEO_BUFFER_SIZE = MAX_PACKET_PAYLOAD_SIZE - sizeof(FecHeader);
+//static const int MAX_VIDEO_BUFFER_SIZE = MAX_PACKET_PAYLOAD_SIZE - sizeof(FecHeader);
 static const int MAX_FEC_SHARDS = 250; // MAX_FEC_SHARDS >= data shards + parity_shards
 
 /* 计算冗余分片数据 */
@@ -45,11 +45,11 @@ static int CalculateParityShards(int data_shards, int fec_percentage)
 理论上丢包个数在200以内可以恢复, 前提是每个组均匀丢弃10个包。
 如果一个组丢包数超过了10个包, 那个这个组是无法恢复的, 其他组可恢复, 但是单帧数据就不完整了。
 */
-static int CalculateFECShardPackets(int len, int fec_percentage)
+static int CalculateFECShardPackets(int total_size, int fec_percentage, int payload_size)
 {
 	int max_data_shards = ((MAX_FEC_SHARDS - 2) * 100 + 99 + fec_percentage) / (100 + fec_percentage);
-	int min_block_size = (len + max_data_shards - 1) / max_data_shards;
-	int shard_packets = (min_block_size + MAX_VIDEO_BUFFER_SIZE - 1) / MAX_VIDEO_BUFFER_SIZE;
+	int min_block_size = (total_size + max_data_shards - 1) / max_data_shards;
+	int shard_packets = (min_block_size + payload_size - 1) / payload_size;
 	assert(max_data_shards + CalculateParityShards(max_data_shards, fec_percentage) <= MAX_FEC_SHARDS);
 	return shard_packets;
 }
@@ -67,16 +67,12 @@ FecCodec::~FecCodec()
 
 }
 
-int FecCodec::set_fec_percentage(int percentage)
-{
-	_fec_percentage = percentage;
-	return 0;
-}
 
 
 FecEncoder::FecEncoder()
 {
-	
+	packet_size_ = sizeof(FecHeader) + MAX_FEC_PAYLOAD_SIZE;
+	payload_size_ = MAX_FEC_PAYLOAD_SIZE;
 }
 
 FecEncoder::~FecEncoder()
@@ -84,15 +80,30 @@ FecEncoder::~FecEncoder()
 
 }
 
-int FecEncoder::encode(uint8_t *in_data, uint32_t in_size, FecPackets& out_packets)
+void FecEncoder::SetPercentage(uint32_t percentage)
+{
+	fec_perc_ = percentage;
+}
+
+void FecEncoder::SetPacketSize(uint32_t packet_size)
+{
+	uint32_t head_size = sizeof(FecHeader);
+	uint32_t max_packet_size = MAX_FEC_PAYLOAD_SIZE + head_size;
+	if (packet_size > head_size && packet_size <= max_packet_size) {
+		packet_size_ = packet_size;
+		payload_size_ = packet_size_ - sizeof(FecHeader);
+	}
+}
+
+int FecEncoder::Encode(uint8_t *in_data, uint32_t in_size, FecPackets& out_packets)
 {
 	out_packets.clear();
 
-	int shard_packets = CalculateFECShardPackets(in_size, _fec_percentage);
-	int block_size = shard_packets * MAX_VIDEO_BUFFER_SIZE;
+	int shard_packets = CalculateFECShardPackets(in_size, fec_perc_, payload_size_);
+	int block_size = shard_packets * payload_size_;
 
 	int data_shards = (in_size + block_size - 1) / block_size;
-	int parity_shards = CalculateParityShards(data_shards, _fec_percentage);
+	int parity_shards = CalculateParityShards(data_shards, fec_perc_);
 	int total_shards = data_shards + parity_shards;
 
 	assert(total_shards <= DATA_SHARDS_MAX);
@@ -124,14 +135,16 @@ int FecEncoder::encode(uint8_t *in_data, uint32_t in_size, FecPackets& out_packe
 
 	memset(&header, 0, sizeof(header));
 	header.fec_index = 0;
-	header.fec_percentage = _fec_percentage;	
+	header.fec_percentage = fec_perc_;	
 	header.total_size = in_size;
 	header.fec_timestamp = (uint64_t)time_point.time_since_epoch().count();
-	
-	int data_remain = in_size;
+	header.max_payload_size = payload_size_;
+	header.is_parity_shard = 0;
+
+	uint32_t data_remain = in_size;
 	for (int i = 0; i < data_shards; i++) {		
 		for (int j = 0; j < shard_packets; j++) {
-			int copy_length = std::min(MAX_VIDEO_BUFFER_SIZE, data_remain);
+			int copy_length = std::min(payload_size_, data_remain);
 			if (copy_length <= 0) {
 				break;
 			}
@@ -140,24 +153,25 @@ int FecEncoder::encode(uint8_t *in_data, uint32_t in_size, FecPackets& out_packe
 
 			std::shared_ptr<FecPacket> packet_ptr = std::make_shared<FecPacket>();
 			memcpy(&packet_ptr->header, &header, sizeof(FecHeader));
-			memcpy(packet_ptr->payload, shards[i] + j * MAX_VIDEO_BUFFER_SIZE, copy_length);
+			memcpy(packet_ptr->payload, shards[i] + j * payload_size_, copy_length);
 			out_packets[header.fec_index] = packet_ptr;
 
 			header.fec_index++;
-			data_remain -= MAX_VIDEO_BUFFER_SIZE;
+			data_remain -= payload_size_;
 		}
 	}
 
 	header.fec_index = data_shards * shard_packets;
+	header.is_parity_shard = 1;
 
 	for (int i = 0; i < parity_shards; i++) {
 		for (int j = 0; j < shard_packets; j++) {
-			int copy_length = MAX_VIDEO_BUFFER_SIZE;
+			int copy_length = payload_size_;
 			header.fec_payload_size = copy_length;
-
+			
 			std::shared_ptr<FecPacket> packet_ptr = std::make_shared<FecPacket>();
 			memcpy(&packet_ptr->header, &header, sizeof(FecHeader));
-			memcpy(packet_ptr->payload, shards[data_shards + i] + j * MAX_VIDEO_BUFFER_SIZE, copy_length);
+			memcpy(packet_ptr->payload, shards[data_shards + i] + j * payload_size_, copy_length);
 
 			out_packets[header.fec_index] = packet_ptr;
 			header.fec_index++;
@@ -175,19 +189,20 @@ int FecEncoder::encode(uint8_t *in_data, uint32_t in_size, FecPackets& out_packe
 	return 0;
 }
 
-int FecDecoder::decode(FecPackets& in_packets, uint8_t *out_buf, uint32_t max_out_buf_size)
+int FecDecoder::Decode(FecPackets& in_packets, uint8_t *out_buf, uint32_t max_out_buf_size)
 {
 	auto& packet_header = in_packets.begin()->second->header;
 	uint32_t total_size = packet_header.total_size;
 	uint32_t fec_percentage = packet_header.fec_percentage;
+	uint32_t max_payload_size = packet_header.max_payload_size;
 
 	if (total_size > max_out_buf_size) {
 		return -1;
 	}
 
-	uint32_t total_data_packets = (total_size + MAX_VIDEO_BUFFER_SIZE - 1) / MAX_VIDEO_BUFFER_SIZE;
-	uint32_t shard_packets = CalculateFECShardPackets(total_size, fec_percentage);
-	uint32_t block_size = shard_packets * MAX_VIDEO_BUFFER_SIZE;
+	uint32_t total_data_packets = (total_size + max_payload_size - 1) / max_payload_size;
+	uint32_t shard_packets = CalculateFECShardPackets(total_size, fec_percentage, max_payload_size);
+	uint32_t block_size = shard_packets * max_payload_size;
 	uint32_t data_shards = (total_size + block_size - 1) / block_size;
 	uint32_t parity_shards = CalculateParityShards(data_shards, fec_percentage);
 	uint32_t total_shards = data_shards + parity_shards;
@@ -217,11 +232,11 @@ int FecDecoder::decode(FecPackets& in_packets, uint8_t *out_buf, uint32_t max_ou
 
 	for (auto iter : in_packets) {
 		auto& packet = iter.second;
-		uint8_t* buffer = &frame_buffer[packet->header.fec_index * MAX_VIDEO_BUFFER_SIZE];
+		uint8_t* buffer = &frame_buffer[packet->header.fec_index * max_payload_size];
 		uint32_t size = packet->header.fec_payload_size;
 		memcpy(buffer, packet->payload, size);
-		if (size != MAX_VIDEO_BUFFER_SIZE) {
-			memset(buffer + size, 0, MAX_VIDEO_BUFFER_SIZE - size);
+		if (size != max_payload_size) {
+			memset(buffer + size, 0, max_payload_size - size);
 		}
 
 		uint32_t shard_index = packet->header.fec_index / shard_packets;
@@ -252,11 +267,11 @@ int FecDecoder::decode(FecPackets& in_packets, uint8_t *out_buf, uint32_t max_ou
 		}
 
 		for (uint32_t row = 0; row < total_shards; row++) {
-			shards[row] = &frame_buffer[(row * shard_packets + column) * MAX_VIDEO_BUFFER_SIZE];
+			shards[row] = &frame_buffer[(row * shard_packets + column) * max_payload_size];
 		}
 
 		int result = reed_solomon_reconstruct(rs.get(), (uint8_t**)&shards[0], &marks[column][0],
-			total_shards, MAX_VIDEO_BUFFER_SIZE);
+			total_shards, max_payload_size);
 		assert(result == 0);
 		recovered_packet[column] = true;
 	}

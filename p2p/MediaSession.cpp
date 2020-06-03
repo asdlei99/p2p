@@ -27,6 +27,8 @@ MediaSession::~MediaSession()
 
 bool MediaSession::Open()
 {
+	rtp_sink_->SetOption(OPT_SET_FEC_PERC, fec_perc_);
+	rtp_sink_->SetOption(OPT_SET_PACKET_LOSS_PERC, packet_loss_perc_);
 	return rtp_sink_->Open();
 }
 

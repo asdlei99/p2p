@@ -8,22 +8,28 @@
 namespace fec
 {
 
-static const int MAX_PACKET_PAYLOAD_SIZE = 1300;
+static const int MAX_FEC_PAYLOAD_SIZE = 1392;
 
+#pragma pack(push)
+#pragma pack(4)
 struct FecHeader
 {
 	uint64_t fec_timestamp;
 	uint32_t fec_index;	
-	uint32_t fec_percentage;
-	uint32_t fec_payload_size;
+	uint16_t fec_percentage;
+	uint16_t fec_payload_size;
+
+	uint16_t is_parity_shard;
+	uint16_t max_payload_size;
 
 	uint32_t total_size;
 };
+#pragma pack(pop)
 
 struct FecPacket
 {
 	FecHeader header;
-	uint8_t   payload[MAX_PACKET_PAYLOAD_SIZE];
+	uint8_t   payload[MAX_FEC_PAYLOAD_SIZE];
 };
 
 typedef std::map<uint32_t, std::shared_ptr<FecPacket>> FecPackets;
@@ -33,10 +39,9 @@ class FecCodec
 public:
 	FecCodec();
 	virtual ~FecCodec();
-	virtual int set_fec_percentage(int percentage);
 
 protected:
-	int _fec_percentage = 5;
+
 };
 
 class FecEncoder : public FecCodec
@@ -45,13 +50,21 @@ public:
 	FecEncoder();
 	virtual ~FecEncoder();
 
-	int encode(uint8_t *in_data, uint32_t in_size, FecPackets& out_packets);
+	void SetPacketSize(uint32_t packet_size);
+	void SetPercentage(uint32_t percentage);
+
+	int Encode(uint8_t *in_data, uint32_t in_size, FecPackets& out_packets);
+
+private:
+	uint32_t fec_perc_ = 5;
+	uint32_t packet_size_ ;
+	uint32_t payload_size_;
 };
 
 class FecDecoder : public FecCodec
 {
 public:
-	int decode(FecPackets& in_packets, uint8_t *out_buf, uint32_t max_out_buf_size);
+	int Decode(FecPackets& in_packets, uint8_t *out_buf, uint32_t max_out_buf_size);
 };
 
 }

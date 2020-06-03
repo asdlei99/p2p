@@ -3,8 +3,11 @@
 
 #include "UdpSocket.h"
 #include "RtpPacket.hpp"
+#include "option.hpp"
+#include "fec/fec.h"
+#include <random>
 
-class RtpSink : public std::enable_shared_from_this<RtpSink>
+class RtpSink : public std::enable_shared_from_this<RtpSink>, public Option
 {
 public:
 	RtpSink& operator=(const RtpSink&) = delete;
@@ -25,6 +28,8 @@ public:
 
 private:
 	void HandleFrame(std::shared_ptr<uint8_t> data, uint32_t size, uint8_t type, uint32_t timestamp);
+	void SendRtp(std::shared_ptr<uint8_t>& data, uint32_t& size, uint8_t& type, uint32_t& timestamp);
+	void SendRtpOverFEC(std::shared_ptr<uint8_t>& data, uint32_t& size, uint8_t& type, uint32_t& timestamp);
 
 	asio::io_context& io_context_;
 	asio::io_context::strand io_strand_;
@@ -35,10 +40,12 @@ private:
 	asio::ip::udp::endpoint peer_rtcp_address_;
 
 	std::unique_ptr<RtpPacket> rtp_packet_;
+	std::unique_ptr<fec::FecEncoder> fec_encoder_;
 
-	int packet_seq_ = 0;
-	int packet_size_ = 1024;
-	int use_fec_ = 0;
+	std::random_device rand;
+
+	uint32_t packet_seq_ = 0;
+	uint32_t packet_size_ = 1024;
 };
 
 #endif

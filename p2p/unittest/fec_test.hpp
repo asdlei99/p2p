@@ -26,8 +26,9 @@ TEST_CASE("Test fec codec")
 	// 丢包率 10% , FEC比例 20% 
 	// 丢包率 15% , FEC比例 25% 
 	// 丢包率 20% , FEC比例 30% 
-	encoder.set_fec_percentage(10);
-	int ret = encoder.encode(in_data, in_size, out_packets);
+	encoder.SetPercentage(15);
+	encoder.SetPacketSize(1024);
+	int ret = encoder.Encode(in_data, in_size, out_packets);
 	REQUIRE(ret == 0);
 
 	// 随机丢包(5%)
@@ -39,7 +40,7 @@ TEST_CASE("Test fec codec")
 
 	// FEC解码
 	bool is_error = true;
-	if (decoder.decode(out_packets, out_data, out_size) > 0) {
+	if (decoder.Decode(out_packets, out_data, out_size) > 0) {
 		is_error = false;
 		// 与原数据包对比
 		for (uint32_t i = 0; i < out_size; i++) {

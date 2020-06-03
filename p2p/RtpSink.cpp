@@ -15,6 +15,7 @@ RtpSink::RtpSink(asio::io_service& io_service)
 	: io_context_(io_service)
 	, io_strand_(io_service)
 	, rtp_packet_(new RtpPacket)
+	, fec_encoder_(new fec::FecEncoder)
 {
 	std::random_device rd;
 	rtp_packet_->SetCSRC(rd());
@@ -137,6 +138,16 @@ void RtpSink::HandleFrame(std::shared_ptr<uint8_t> data, uint32_t size, uint8_t 
 		return;
 	}
 
+	if (use_fec_ > 0 && fec_perc_ > 0) {
+		return SendRtpOverFEC(data, size, type, timestamp);
+	}
+	else {
+		return SendRtp(data, size, type, timestamp);
+	}
+}
+
+void RtpSink::SendRtp(std::shared_ptr<uint8_t>& data, uint32_t& size, uint8_t& type, uint32_t& timestamp)
+{
 	int rtp_payload_size = packet_size_ - RTP_HEADER_SIZE;
 	int data_index = 0;
 	int data_size = size;
@@ -148,7 +159,7 @@ void RtpSink::HandleFrame(std::shared_ptr<uint8_t> data, uint32_t size, uint8_t 
 	while (data_index < data_size) {
 		int bytes_used = data_size - data_index;
 		if (bytes_used > rtp_payload_size) {
-			bytes_used = rtp_payload_size;			
+			bytes_used = rtp_payload_size;
 		}
 		else {
 			rtp_packet_->SetMarker(1);
@@ -159,5 +170,42 @@ void RtpSink::HandleFrame(std::shared_ptr<uint8_t> data, uint32_t size, uint8_t 
 		data_index += bytes_used;
 		rtp_socket_->Send(rtp_packet_->Get(), rtp_packet_->Size(), peer_rtp_address_);
 		//printf("mark:%d, seq:%d, size: %u\n", rtp_packet_->GetMarker(), rtp_packet_->GetSeq(), rtp_packet_->Size());
+	}
+}
+
+void RtpSink::SendRtpOverFEC(std::shared_ptr<uint8_t>& data, uint32_t& size, uint8_t& type, uint32_t& timestamp)
+{
+	int rtp_payload_size = packet_size_ - RTP_HEADER_SIZE;
+	int data_index = 0;
+	int data_size = size;
+
+	rtp_packet_->SetPayloadType(type);
+	rtp_packet_->SetTimestamp(timestamp);
+	rtp_packet_->SetMarker(0);
+
+	rtp_packet_->SetExtension(1); // use fec
+
+	fec_encoder_->SetPercentage(fec_perc_);
+	fec_encoder_->SetPacketSize(rtp_payload_size);
+
+	fec::FecPackets out_packets;
+	int ret = fec_encoder_->Encode(data.get(), size, out_packets);
+	if (ret != 0) {
+		return;
+	}
+
+	for (auto iter : out_packets) {
+		if(iter == *out_packets.rbegin()) {
+			rtp_packet_->SetMarker(1);
+		}
+
+		rtp_packet_->SetSeq(packet_seq_++);
+		rtp_packet_->SetPayload((uint8_t*)iter.second.get(), sizeof(fec::FecPacket));
+
+		bool loss = packet_loss_perc_ > 0 && (rand() % 100 < packet_loss_perc_);
+		if (!loss) {
+			rtp_socket_->Send(rtp_packet_->Get(), rtp_packet_->Size(), peer_rtp_address_);
+			//printf("mark:%d, seq:%d, size: %u\n", rtp_packet_->GetMarker(), rtp_packet_->GetSeq(), rtp_packet_->Size());
+		}		
 	}
 }

@@ -1676,5 +1676,8 @@
     <ClInclude Include="enet\enet_time.h">
       <Filter>源文件\enet</Filter>
     </ClInclude>
+    <ClInclude Include="option.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

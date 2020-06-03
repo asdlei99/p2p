@@ -9,9 +9,10 @@
 #include "MediaSession.h"
 #include "EventCallback.h"
 #include "ByteArray.hpp"
+#include "option.hpp"
 #include "asio/asio.hpp"
 
-class MediaServer
+class MediaServer : public Option
 {
 public:
 	MediaServer();
